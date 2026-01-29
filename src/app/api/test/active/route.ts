@@ -36,7 +36,7 @@ export async function GET() {
   }
 
   const wordMap = new Map((words ?? []).map((word) => [word.id, word]));
-  const orderedWords = session.order_ids.map((id) => wordMap.get(id)).filter(Boolean);
+  const orderedWords = session.order_ids.map((id: string) => wordMap.get(id)).filter(Boolean);
 
   return NextResponse.json({ session, words: orderedWords });
 }
