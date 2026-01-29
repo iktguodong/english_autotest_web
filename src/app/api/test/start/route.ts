@@ -15,6 +15,13 @@ const shuffleArray = <T,>(items: T[]) => {
   return copy;
 };
 
+const normalizeWrongWords = (rows: Array<{ words?: unknown }>) =>
+  rows.flatMap((row) => {
+    const value = row.words;
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  }) as Array<{ id: string; word: string; meaning: string }>;
+
 export async function POST(request: Request) {
   const { user, response } = await requireUser();
   if (!user) return response;
@@ -53,10 +60,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Failed to load wrong words" }, { status: 500 });
       }
 
-      words =
-        data
-          ?.map((row) => row.words)
-          .filter((row): row is { id: string; word: string; meaning: string } => Boolean(row)) ?? [];
+      words = normalizeWrongWords(data ?? []);
 
       wordListId = listId;
     } else {
@@ -70,10 +74,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Failed to load wrong words" }, { status: 500 });
       }
 
-      words =
-        data
-          ?.map((row) => row.words)
-          .filter((row): row is { id: string; word: string; meaning: string } => Boolean(row)) ?? [];
+      words = normalizeWrongWords(data ?? []);
 
       wordListId = null;
     }
