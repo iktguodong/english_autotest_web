@@ -84,6 +84,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<"image" | "manual">("image");
+  const [activeView, setActiveView] = useState<"home" | "lists" | "wrong" | "history">("home");
+  const dismissNotice = () => {
+    setNotice(null);
+    setError(null);
+  };
 
   const currentWord = useMemo(() => {
     if (!activeSession) return null;
@@ -188,6 +193,7 @@ export default function Home() {
       setWrongWords([]);
       setGlobalWrongWords([]);
       setCurrentListId(null);
+      setActiveView("home");
     } catch (err) {
       setError(err instanceof Error ? err.message : "退出失败");
     } finally {
@@ -258,6 +264,7 @@ export default function Home() {
       setShowAnswer(false);
       setSummaryOpen(false);
       setCurrentListId(listId);
+      setActiveView("home");
     } catch (err) {
       setError(err instanceof Error ? err.message : "无法开始测试");
     } finally {
@@ -331,6 +338,7 @@ export default function Home() {
       setShowAnswer(false);
       setSummaryOpen(false);
       setCurrentListId(listId);
+      setActiveView("home");
     } catch (err) {
       setError(err instanceof Error ? err.message : "无法开始错词本复测");
     } finally {
@@ -363,6 +371,7 @@ export default function Home() {
   const handleResume = async () => {
     await loadActiveSession();
     setShowAnswer(false);
+    setActiveView("home");
   };
 
   const resetSession = () => {
@@ -404,14 +413,13 @@ export default function Home() {
   );
 
   const renderUploadPanel = () => (
-    <div className="panel">
+    <div className="panel compact">
       <div className="panel-header">
         <div>
-          <div className="kicker">自定义词表</div>
           <h3>上传图片生成词库</h3>
         </div>
       </div>
-      <p className="hero-subtitle">支持包含英文单词的照片/截图，自动识别并翻译。</p>
+      <p className="hero-subtitle">支持包含英文单词的照片/截图，自动识别，整理测试。</p>
       <input
         className="input"
         type="file"
@@ -424,18 +432,17 @@ export default function Home() {
   );
 
   const renderManualPanel = () => (
-    <div className="panel">
+    <div className="panel compact">
       <div className="panel-header">
         <div>
-          <div className="kicker">手动输入</div>
-          <h3>直接输入单词清单</h3>
+          <h3>直接输入单词</h3>
         </div>
       </div>
       <p className="hero-subtitle">每行一个单词或短语，系统会自动翻译并去重。</p>
       <textarea
         className="input"
-        rows={6}
-        placeholder={`例如:\napple\norange\nplay football`}
+        rows={4}
+        placeholder={`例如:\napple\norange...`}
         value={manualText}
         onChange={(event) => setManualText(event.target.value)}
       />
@@ -449,30 +456,29 @@ export default function Home() {
     <div className="panel">
       <div className="panel-header">
         <div>
-          <div className="kicker">词表库</div>
           <h3>选择一个词表开始测试</h3>
         </div>
-      </div>
-      <div className="pill-row">
-        <label>
-          模式
-          <select
-            className="input"
-            value={mode}
-            onChange={(event) => setMode(event.target.value as TestSession["mode"])}
-          >
-            <option value="english-to-chinese">英 → 中</option>
-            <option value="chinese-to-english">中 → 英</option>
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={shuffle}
-            onChange={(event) => setShuffle(event.target.checked)}
-          />
-          随机顺序
-        </label>
+        <div className="panel-actions">
+          <label className="field">
+            <span>模式</span>
+            <select
+              className="input"
+              value={mode}
+              onChange={(event) => setMode(event.target.value as TestSession["mode"])}
+            >
+              <option value="english-to-chinese">英 → 中</option>
+              <option value="chinese-to-english">中 → 英</option>
+            </select>
+          </label>
+          <label className="field checkbox">
+            <input
+              type="checkbox"
+              checked={shuffle}
+              onChange={(event) => setShuffle(event.target.checked)}
+            />
+            随机顺序
+          </label>
+        </div>
       </div>
       <ul className="list">
         {lists.length === 0 && <li className="notice">暂无词表，请先上传图片或手动输入。</li>}
@@ -497,17 +503,16 @@ export default function Home() {
   );
 
   const renderWrongWordsPanel = () => (
-    <details className="panel" open>
-      <summary className="panel-header">
+    <div className="panel">
+      <div className="panel-header">
         <div>
-          <div className="kicker">错词本</div>
           <h3>当前词表错词</h3>
         </div>
-      </summary>
-      <div className="pill-row">
-        <button className="button secondary" onClick={() => startWrongTest(currentListId)} disabled={loading}>
-          当前词表错词复测
-        </button>
+        <div className="panel-actions">
+          <button className="button ghost" onClick={() => startWrongTest(currentListId)} disabled={loading}>
+            当前词表错词复测
+          </button>
+        </div>
       </div>
       <ul className="list">
         {wrongWords.length === 0 && <li className="notice">暂无错词记录。</li>}
@@ -521,17 +526,16 @@ export default function Home() {
           </li>
         ))}
       </ul>
-    </details>
+    </div>
   );
 
   const renderHistoryPanel = () => (
-    <details className="panel">
-      <summary className="panel-header">
+    <div className="panel">
+      <div className="panel-header">
         <div>
-          <div className="kicker">历史记录</div>
           <h3>最近完成的测试</h3>
         </div>
-      </summary>
+      </div>
       <ul className="list">
         {history.length === 0 && <li className="notice">暂无历史记录。</li>}
         {history.map((item) => (
@@ -546,7 +550,37 @@ export default function Home() {
           </li>
         ))}
       </ul>
-    </details>
+    </div>
+  );
+
+  const renderGlobalWrongPanel = () => (
+    <div className="panel">
+      <div className="panel-header">
+        <div>
+          <h3>高频错误单词</h3>
+        </div>
+        <div className="panel-actions">
+          <button className="button ghost" onClick={() => startWrongTest(null)} disabled={loading}>
+            全局错词复测
+          </button>
+        </div>
+      </div>
+      <ul className="list">
+        {globalWrongWords.length === 0 && <li className="notice">暂无错词记录。</li>}
+        {globalWrongWords.map((item, index) => (
+          <li
+            key={`${item.word_id}-${item.word_list_id ?? "global"}-${item.last_wrong_at ?? "none"}-${index}`}
+            className="list-item"
+          >
+            <div>
+              <strong>{item.words?.word ?? ""}</strong>
+              <div className="kicker">{item.words?.meaning ?? ""}</div>
+            </div>
+            <span className="badge">错 {item.wrong_count} 次</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 
   const renderQuizPanel = () => {
@@ -556,18 +590,17 @@ export default function Home() {
     const answer = activeSession.mode === "english-to-chinese" ? currentWord.meaning : currentWord.word;
 
     return (
-      <div className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="kicker">正在测试</div>
-            <h3>第 {activeSession.current_index + 1} / {activeSession.order_ids.length} 题</h3>
-          </div>
-          <div className="badge">正确率 {accuracy}%</div>
+      <div className="panel narrow">
+      <div className="panel-header">
+        <div>
+          <h3>第 {activeSession.current_index + 1} / {activeSession.order_ids.length} 题</h3>
         </div>
+        <div className="badge">正确率 {accuracy}%</div>
+      </div>
         <div className="quiz">
           <div className="quiz-word">{question}</div>
           {showAnswer && <div className="quiz-meaning">{answer}</div>}
-          <div className="pill-row">
+          <div className="pill-row center">
             {!showAnswer && (
               <button
                 className="button"
@@ -606,14 +639,13 @@ export default function Home() {
     if (!summaryOpen) return null;
 
     return (
-      <div className="panel">
-        <div className="panel-header">
-          <div>
-            <div className="kicker">测试总结</div>
-            <h3>共完成 {activeSession.correct_ids.length + activeSession.incorrect_ids.length} 题</h3>
-          </div>
-          <div className="badge">正确率 {accuracy}%</div>
+      <div className="panel narrow">
+      <div className="panel-header">
+        <div>
+          <h3>共完成 {activeSession.correct_ids.length + activeSession.incorrect_ids.length} 题</h3>
         </div>
+        <div className="badge">正确率 {accuracy}%</div>
+      </div>
         <div className="grid two">
           <div>
             <h4>答对</h4>
@@ -636,15 +668,17 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <div className="pill-row">
+        <div className="pill-row center">
           {currentListId && (
             <button className="button" onClick={handleShuffleRetest}>
               打乱顺序再测
             </button>
           )}
-          <button className="button secondary" onClick={() => startWrongTest(null)}>
-            全局错词复测
-          </button>
+          {incorrectWords.length > 0 && currentListId && (
+            <button className="button secondary" onClick={() => startWrongTest(currentListId)}>
+              错题再来一次
+            </button>
+          )}
           <button className="button ghost" onClick={resetSession}>
             返回首页
           </button>
@@ -655,101 +689,151 @@ export default function Home() {
 
   return (
     <div className="app">
-      <section className="hero">
-        <div className="hero-card">
-          <span className="badge">English Autotest</span>
-          <h1 className="hero-title">拍照定制单词测试系统</h1>
-          <p className="hero-subtitle">
-            让你的词汇测试真正为你定制。<br />
-            上传图片或手动输入，系统自动识别、翻译并生成测试。
-          </p>
-          {notice && <div className="notice">{notice}</div>}
-          {error && <div className="notice error">{error}</div>}
-          {user ? (
-            <div className="grid">
-              <div className="badge">当前用户：{user.username}</div>
-              <button className="button ghost" onClick={handleLogout} disabled={loading}>
-                退出登录
+      <header className="topbar">
+        <div className="topbar-inner">
+          <div className="brand">
+            <span className="badge">AItest</span>
+            <span className="brand-title">拍照测单词</span>
+          </div>
+          {user && (
+            <nav className="nav">
+              <button
+                type="button"
+                className={activeView === "home" ? "active" : ""}
+                onClick={() => setActiveView("home")}
+              >
+                首页
               </button>
-              {activeSession && activeSession.status === "active" && (
-                <button className="button" onClick={handleResume}>
-                  继续上次测试
-                </button>
-              )}
-            </div>
-          ) : (
-            renderAuthCard()
+              <button
+                type="button"
+                className={activeView === "lists" ? "active" : ""}
+                onClick={() => setActiveView("lists")}
+              >
+                词表库
+              </button>
+              <button
+                type="button"
+                className={activeView === "wrong" ? "active" : ""}
+                onClick={() => setActiveView("wrong")}
+              >
+                高频错误单词
+              </button>
+              <button
+                type="button"
+                className={activeView === "history" ? "active" : ""}
+                onClick={() => setActiveView("history")}
+              >
+                最近完成的测试
+              </button>
+            </nav>
           )}
+          <div className="topbar-actions">
+            {user ? (
+              <>
+                <button className="button ghost" onClick={() => setActiveView("home")}>
+                  首页
+                </button>
+                <div className="user-chip">
+                  <span className="user-dot" />
+                  {user.username}
+                </div>
+                {activeSession && activeSession.status === "active" && (
+                  <button className="button ghost" onClick={handleResume}>
+                    继续上次测试
+                  </button>
+                )}
+                <button className="button ghost" onClick={handleLogout} disabled={loading}>
+                  退出登录
+                </button>
+              </>
+            ) : (
+              <span className="kicker">欢迎登录</span>
+            )}
+          </div>
         </div>
-        {user && (
-          <div className="grid">
-            <div className="panel">
-              <div className="panel-header">
-                <div>
-                  <div className="kicker">输入方式</div>
-                  <h3>选择生成词表方式</h3>
+      </header>
+
+      {!user && (
+        <section className="hero hero-center">
+          <div className="hero-card">
+            <span className="badge">AItest</span>
+            <h1 className="hero-title">拍照测单词</h1>
+            <p className="hero-subtitle">
+              让你的词汇测试真正为你定制。<br />
+              上传图片或手动输入，系统自动识别、翻译并生成测试。
+            </p>
+            {renderAuthCard()}
+          </div>
+        </section>
+      )}
+
+      {user && activeView === "home" && (
+        <section className="hero hero-auth">
+          <div className="hero-intro">
+            <div className="grid hero-inputs">
+              <div className="panel compact">
+                <div className="panel-header">
+                  <div>
+                    <h3>单词来源</h3>
+                  </div>
+                </div>
+                <div className="pill-row">
+                  <button
+                    className={inputMode === "image" ? "button" : "button ghost"}
+                    onClick={() => setInputMode("image")}
+                    disabled={loading}
+                  >
+                    上传图片
+                  </button>
+                  <button
+                    className={inputMode === "manual" ? "button" : "button ghost"}
+                    onClick={() => setInputMode("manual")}
+                    disabled={loading}
+                  >
+                    手动输入
+                  </button>
                 </div>
               </div>
-              <div className="pill-row">
-                <button
-                  className={inputMode === "image" ? "button" : "button ghost"}
-                  onClick={() => setInputMode("image")}
-                  disabled={loading}
-                >
-                  上传图片
-                </button>
-                <button
-                  className={inputMode === "manual" ? "button" : "button ghost"}
-                  onClick={() => setInputMode("manual")}
-                  disabled={loading}
-                >
-                  手动输入
-                </button>
-              </div>
+              {inputMode === "image" ? renderUploadPanel() : renderManualPanel()}
             </div>
-            {inputMode === "image" ? renderUploadPanel() : renderManualPanel()}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {user && (
         <section className="section">
-          {activeSession && !summaryOpen && renderQuizPanel()}
-          {summaryOpen && renderSummary()}
-          {renderListsPanel()}
-          {currentListId && renderWrongWordsPanel()}
-          <details className="panel">
-            <summary className="panel-header">
-              <div>
-                <div className="kicker">全局错词</div>
-                <h3>高频错误单词</h3>
-              </div>
-            </summary>
-            <div className="pill-row">
-              <button className="button secondary" onClick={() => startWrongTest(null)} disabled={loading}>
-                全局错词复测
-              </button>
-            </div>
-            <ul className="list">
-              {globalWrongWords.length === 0 && <li className="notice">暂无错词记录。</li>}
-              {globalWrongWords.map((item) => (
-                <li key={`${item.word_id}-${item.word_list_id ?? "global"}`} className="list-item">
-                  <div>
-                    <strong>{item.words?.word ?? ""}</strong>
-                    <div className="kicker">{item.words?.meaning ?? ""}</div>
-                  </div>
-                  <span className="badge">错 {item.wrong_count} 次</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-          {renderHistoryPanel()}
+          {activeView === "home" && (
+            <>
+              {activeSession && !summaryOpen && renderQuizPanel()}
+              {summaryOpen && renderSummary()}
+            </>
+          )}
+          {activeView === "lists" && renderListsPanel()}
+          {activeView === "wrong" && (
+            <>
+              {currentListId && renderWrongWordsPanel()}
+              {renderGlobalWrongPanel()}
+            </>
+          )}
+          {activeView === "history" && renderHistoryPanel()}
         </section>
       )}
 
       <footer className="footer">
-        建议在 Supabase 控制台设置每日备份，确保词表与测试历史安全。
+        每日英语，快乐无边！
       </footer>
+
+      {(notice || error) && (
+        <div className="modal-backdrop" onClick={dismissNotice}>
+          <div className={`modal ${error ? "error" : ""}`} onClick={(event) => event.stopPropagation()}>
+            <div className="modal-title">{error ? "操作失败" : "提示"}</div>
+            <div className="modal-message">{error ?? notice}</div>
+            <button className="button ghost" onClick={dismissNotice}>
+              知道了
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

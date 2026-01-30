@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Space_Grotesk } from "next/font/google";
+import { Fraunces, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 
 const headline = Fraunces({
@@ -8,14 +8,14 @@ const headline = Fraunces({
   weight: ["600", "700"],
 });
 
-const body = Space_Grotesk({
+const body = Noto_Sans_SC({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "English Autotest",
+  title: "AItest",
   description: "Personalized English word testing with OCR and smart reviews.",
 };
 
